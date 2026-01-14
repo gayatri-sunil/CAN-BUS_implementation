@@ -1,41 +1,54 @@
-# -*- coding: utf-8 -*-
+# can_test.py
+# Sends 250 CAN frames via Canalyst-II using the canalystii Python library.
+# Intended for IE6-BUL Bus Systems lab (CAN Bus Hands-On).
 
-# pip install canalystii
-
+import time
 import canalystii
 
-# Connect to the Canalyst-II device
-# Passing a bitrate to the constructor causes both channels to be initialized and started.
-dev = canalystii.CanalystDevice(bitrate=500000)
 
-# Receive all pending messages on channel 0 / clear buffer
-for msg in dev.receive(1):
-     print(msg)
+def clear_rx_buffer(dev: canalystii.CanalystDevice, rx_channel: int) -> None:
+    """Drain and print any pending RX frames (optional, helps in lab)."""
+    for msg in dev.receive(rx_channel):
+        print(msg)
 
-# sample code for continuous listening:
-#while True:
-#    msg=dev.receive(0)
-#    if msg: print(msg)
 
-# The canalystii.Message class is a ctypes Structure, to minimize overhead
+def main():
+    bitrate = 500000
+    tx_channel = 1
+    rx_channel = 1  # if you have loopback or another node echoing, you can observe here
 
-for value in range(250):
-   pl=(value, value, value, value, value, value, value, value)
-   new_message = canalystii.Message(can_id=0x3FE,
-                                 remote=False,
-                                 extended=False,
-                                 data_len=8,
-                                 data=pl)
-     # Send one copy to channel 1
-   dev.send(1, new_message)
+    dev = canalystii.CanalystDevice(bitrate=bitrate)
 
-for msg in dev.receive(1):
-     print(msg)
+    try:
+        print(f"[INFO] Connected. Bitrate={bitrate}, TX={tx_channel}, RX={rx_channel}")
+        print("[INFO] Clearing RX buffer...")
+        clear_rx_buffer(dev, rx_channel)
 
-# Stop both channels (need to call start() again to resume capturing or send any messages)
-dev.stop(0)
-dev.stop(1)
+        print("[INFO] Sending 250 frames...")
+        for value in range(250):
+            payload = (value, value, value, value, value, value, value, value)
+            msg = canalystii.Message(
+                can_id=0x3FE,
+                remote=False,
+                extended=False,
+                data_len=8,
+                data=payload,
+            )
+            dev.send(tx_channel, msg)
 
-# delete dev at the end to free the interface
-del dev
+        # small pause to allow bus traffic to settle
+        time.sleep(0.1)
 
+        print("[INFO] Reading RX after send...")
+        clear_rx_buffer(dev, rx_channel)
+
+        print("[DONE] can_test completed.")
+
+    finally:
+        dev.stop(0)
+        dev.stop(1)
+        del dev
+
+
+if __name__ == "__main__":
+    main()

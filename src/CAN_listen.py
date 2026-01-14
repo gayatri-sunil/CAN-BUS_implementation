@@ -1,33 +1,38 @@
-# -*- coding: utf-8 -*-
+# can_listen.py
+# Continuously listens to CAN traffic and prints received frames.
 
-# pip install canalystii
-# pip install "python-can[canalystii]"
-# not sure, if both are required
-
+import time
 import canalystii
 
-# Connect to the Canalyst-II device
-# Passing a bitrate to the constructor causes both channels to be initialized and started.
-dev = canalystii.CanalystDevice(bitrate=500000)
 
-# Receive all pending messages on channel 0
-while True:
-    msg=dev.receive(0)
-    if msg: print(msg)
+def main():
+    bitrate = 500000
+    rx_channel = 0
 
-# The canalystii.Message class is a ctypes Structure, to minimize overhead
+    dev = canalystii.CanalystDevice(bitrate=bitrate)
 
-#for value in range(255):
-#    pl=(value, value, value, value, value, value, value, value)
-#    new_message = canalystii.Message(can_id=0x3FE,
-#                                 remote=False,
-#                                 extended=True,
-#                                 data_len=8,
-#                                 data=pl)
-#     # Send one copy to channel 1
-#    dev.send(1, new_message)
+    try:
+        print(f"[INFO] Listening... Bitrate={bitrate}, RX channel={rx_channel}")
+        print("[INFO] Press Ctrl+C to stop.\n")
 
-for msg in dev.receive(0):
-     print(msg)
+        while True:
+            msgs = dev.receive(rx_channel)
+            if msgs:
+                # dev.receive may return a list-like iterable of frames
+                for m in msgs:
+                    print(m)
+            else:
+                # avoid busy loop
+                time.sleep(0.01)
+
+    except KeyboardInterrupt:
+        print("\n[STOP] Listener stopped by user.")
+
+    finally:
+        dev.stop(0)
+        dev.stop(1)
+        del dev
 
 
+if __name__ == "__main__":
+    main()
