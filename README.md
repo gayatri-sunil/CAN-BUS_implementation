@@ -2,7 +2,7 @@
 
 Hands-on laboratory project for the course **IE6-BUL – Bus Systems** (Summer Semester 2025).
 
-This project explores Controller Area Network (CAN) communication through practical experiments involving message transmission, physical layer analysis, sensor data exchange, and automated error detection.
+This project explores Controller Area Network (CAN) communication through practical experiments involving message transmission, physical layer analysis, sensor data exchange, and automated error detection. Automated test requires a serial source (e.g., microcontroller output) and a CAN node that echoes frames for verification.
 
 ## Objectives
 - Configure and test CAN communication using USB-CAN hardware
